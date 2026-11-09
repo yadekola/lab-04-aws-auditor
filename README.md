@@ -8,13 +8,15 @@ Terraform is used to provision an EC2 web server, configure its security group, 
 
 The project also demonstrates Terraform remote state management using Amazon S3 and state locking.
 
+The main infrastructure was successfully deployed and tested before being destroyed as part of the project cleanup process. The remote Terraform backend resources are intentionally retained.
+
 ## 2. Technologies Used
 
 - **Terraform:** Infrastructure as Code (IaC).
 - **Amazon Web Services (AWS):** Cloud infrastructure.
 - **Amazon EC2:** Virtual server hosting the website.
 - **Amazon S3:** Terraform remote state storage.
-- **Amazon DynamoDB:** State locking table configured by the bootstrap infrastructure.
+- **Amazon DynamoDB:** State-locking table configured by the bootstrap infrastructure.
 - **Python:** Automation and auditing.
 - **Boto3:** AWS SDK for Python.
 - **Nginx:** Web server.
@@ -49,7 +51,7 @@ The project follows this workflow:
 | Website Protocol | HTTP |
 | SSH Access | Restricted to the configured public IP |
 | Terraform Backend | Amazon S3 |
-| State Locking | S3 lockfile and configured DynamoDB table |
+| State Locking | S3 native lockfile and configured DynamoDB table |
 
 ### Terraform Backend Bootstrap
 
@@ -67,7 +69,11 @@ The `terraform/` directory contains the main infrastructure configuration, which
 
 **Important:** The bootstrap infrastructure must be created before initializing the main Terraform configuration with the remote backend.
 
-The main configuration currently includes both S3 native lockfile support (`use_lockfile = true`) and a DynamoDB backend table reference. Terraform has deprecated the DynamoDB backend locking argument in favour of S3 native lockfiles. Review this configuration before making future changes.
+The main configuration currently includes both S3 native lockfile support (`use_lockfile = true`) and a DynamoDB backend table reference.
+
+Terraform has deprecated the `dynamodb_table` backend argument in favour of S3 native lockfiles. The S3 native lockfile option is already enabled. Review the backend configuration before making future changes.
+
+The DynamoDB table is intentionally retained as part of this project's backend resources.
 
 ## 5. Boto3 Auditor Features
 
@@ -100,7 +106,7 @@ The generated reports contain:
 
 ## 7. Verified Project Results
 
-The latest successful audit detected two EC2 instances.
+During the successful audit performed before infrastructure cleanup, the auditor detected two EC2 instances.
 
 | Metric | Result |
 |---|---:|
@@ -113,15 +119,17 @@ The latest successful audit detected two EC2 instances.
 
 ### Verified Web Server
 
+The Terraform-managed web server had the following details:
+
 - **Instance ID:** `i-073605aa92f80606d`
 - **Instance Type:** `t3.micro`
-- **State:** Running
+- **State at time of audit:** Running
 - **Name:** `lab-04-web-server`
 - **Owner:** `DevOps-Student`
 
 ### Website Verification
 
-The website was tested using the following command:
+The website was tested using the following command before the EC2 infrastructure was destroyed:
 
 ```bash
 curl -I http://54.242.72.225
@@ -138,6 +146,8 @@ Content-Type: text/html
 This confirmed that the Nginx web server was responding successfully over HTTP at the time of testing.
 
 Both CSV and JSON audit reports were successfully generated and inspected.
+
+**Note:** The public IP address and website endpoint above are historical test results. The EC2 instance has since been destroyed, so the website is no longer running at that address.
 
 ## 8. Cost Estimation Note
 
@@ -185,6 +195,8 @@ Review the plan before approving the creation of AWS resources.
 
 After successful bootstrap creation, note the S3 bucket name and DynamoDB table name from the Terraform outputs.
 
+**Important:** The backend resources for this project already exist and are intentionally retained. Do not run the bootstrap deployment again against the existing resources without first checking its Terraform state and configuration.
+
 ### B. Main Terraform Infrastructure
 
 Move into the main Terraform directory:
@@ -227,6 +239,8 @@ Deploy the infrastructure only after reviewing and approving the plan:
 terraform apply
 ```
 
+**Warning:** Applying the main Terraform configuration will create AWS resources that may incur charges. Always review the plan before approving deployment.
+
 ### C. Python Boto3 Auditor
 
 Return to the project root:
@@ -235,13 +249,13 @@ Return to the project root:
 cd ..
 ```
 
-Create and activate a Python virtual environment if one does not already exist:
+Create a Python virtual environment if one does not already exist:
 
 ```bash
 python -m venv .venv
 ```
 
-On Git Bash:
+On Git Bash, activate the environment:
 
 ```bash
 source .venv/Scripts/activate
@@ -282,6 +296,7 @@ The generated reports are excluded from Git using `.gitignore`.
 - Keep the S3 state bucket private and encrypted.
 - Use appropriate IAM permissions and follow the principle of least privilege.
 - Review Terraform plans before applying or destroying infrastructure.
+- Verify AWS resources before and after cleanup.
 
 ## 11. Project Directory Structure
 
@@ -313,21 +328,49 @@ lab-04-aws-auditor/
 
 ## 12. Project Status
 
-The following milestones have been verified:
+The following milestones have been completed and verified:
 
-- Terraform EC2 provisioning.
-- Nginx installation.
+- Terraform EC2 infrastructure provisioning.
+- Nginx installation and configuration.
 - Public website HTTP verification.
-- Boto3 EC2 discovery.
+- Boto3 EC2 instance discovery.
 - Missing Owner tag detection.
-- Monthly compute cost estimation.
-- CSV report generation.
-- JSON report generation.
-- Before-and-after EC2 audit comparison.
+- Monthly EC2 compute cost estimation.
+- CSV audit report generation.
+- JSON audit report generation.
 - Independent Git repository creation.
 - Initial Git commit.
 - Public GitHub repository publication.
+- Documentation review and improvement.
+- Successful destruction of the three main Terraform-managed resources.
+- Verification that the S3 backend bucket still exists.
+- Verification that the DynamoDB lock table remains ACTIVE.
 
-Final documentation review and AWS infrastructure cleanup remain pending.
+### Current AWS Infrastructure State
 
-**Note:** AWS infrastructure should only be destroyed after reviewing the destruction plan and confirming that the project no longer needs the deployed resources.
+The following main Terraform-managed resources have been destroyed:
+
+- EC2 web server.
+- EC2 key pair registration.
+- EC2 security group.
+
+The following backend resources are intentionally retained:
+
+| Resource | Name | Current Status |
+|---|---|---|
+| S3 bucket | `lab-04-aws-auditor-tfstate-476c87e6` | Exists |
+| DynamoDB table | `lab-04-aws-auditor-state-lock` | ACTIVE |
+
+The main website is no longer running because its EC2 instance has been destroyed.
+
+The remote Terraform backend remains available for future infrastructure deployments.
+
+## 13. Conclusion
+
+This project provided practical experience in Infrastructure as Code, AWS resource provisioning, Terraform remote state management, Python automation, and cloud infrastructure auditing.
+
+It demonstrated how Terraform can provision cloud infrastructure while Python and Boto3 can automate resource discovery, identify configuration issues, estimate compute costs, and generate audit reports.
+
+The project also covered infrastructure cleanup, remote backend preservation, version control, and project documentation.
+
+**GitHub Repository:** https://github.com/yadekola/lab-04-aws-auditor
