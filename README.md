@@ -104,7 +104,31 @@ The generated reports contain:
 - Launch Time
 - Estimated Monthly Cost
 
+### Report Formats
+
+**CSV Report**
+
+`reports/ec2_audit_report.csv`
+
+Contains EC2 audit records in spreadsheet-compatible CSV format.
+
+**JSON Report**
+
+`reports/ec2_audit_report.json`
+
+Contains the same EC2 audit records in structured JSON format.
+
+The Python script automatically creates the `reports/` directory if it does not exist.
+
+Generated CSV and JSON files are excluded from Git, while the documentation inside the directory can be tracked.
+
+See `reports/README.md` for more information.
+
 ## 7. Verified Project Results
+
+The project has been tested at different stages. Historical infrastructure testing and the latest live audit are documented separately.
+
+### A. Historical Infrastructure Audit
 
 During the successful audit performed before infrastructure cleanup, the auditor detected two EC2 instances.
 
@@ -117,7 +141,7 @@ During the successful audit performed before infrastructure cleanup, the auditor
 | Missing Prices | 0 |
 | Estimated Monthly Compute Cost | $7.59 |
 
-### Verified Web Server
+#### Verified Web Server
 
 The Terraform-managed web server had the following details:
 
@@ -127,7 +151,7 @@ The Terraform-managed web server had the following details:
 - **Name:** `lab-04-web-server`
 - **Owner:** `DevOps-Student`
 
-### Website Verification
+#### Website Verification
 
 The website was tested using the following command before the EC2 infrastructure was destroyed:
 
@@ -145,9 +169,34 @@ Content-Type: text/html
 
 This confirmed that the Nginx web server was responding successfully over HTTP at the time of testing.
 
-Both CSV and JSON audit reports were successfully generated and inspected.
+### B. Latest Live Boto3 Audit
 
-**Note:** The public IP address and website endpoint above are historical test results. The EC2 instance has since been destroyed, so the website is no longer running at that address.
+On 9 November 2026, the Boto3 auditor successfully connected to AWS and discovered one EC2 instance.
+
+| Metric | Result |
+|---|---:|
+| Total Instances | 1 |
+| Running Instances | 0 |
+| Stopped Instances | 1 |
+| Missing Owner Tags | 1 |
+| Missing Prices | 0 |
+| Estimated Monthly Compute Cost | $0.00 |
+
+#### Latest Instance Details
+
+- **Instance ID:** `i-0e8901cab98ab0e23`
+- **Instance Type:** `t3.micro`
+- **State:** Stopped
+- **Name:** `Dove-web`
+- **Owner:** Missing
+
+The auditor correctly identified the missing Owner tag and generated a warning.
+
+Both CSV and JSON reports were successfully generated and inspected.
+
+**Important:** The latest audit result describes the EC2 instance visible to the Boto3 auditor at that time. It does not mean the original Terraform-managed web server is still running.
+
+The public IP address and website endpoint documented above are historical test results. The Terraform-managed EC2 instance has since been destroyed, so the website is no longer running at that address.
 
 ## 8. Cost Estimation Note
 
@@ -273,17 +322,23 @@ Run the auditor from the project root:
 python scripts/aws_audit.py
 ```
 
-The script generates CSV and JSON audit reports in the project root.
+The script connects to AWS using the configured credentials and generates CSV and JSON audit reports inside the `reports/` directory when EC2 records are found.
 
 ### D. Verify Generated Reports
 
 Check the generated report files:
 
 ```bash
-ls ec2_audit_report.*
+ls -lh reports/
 ```
 
-The generated reports are excluded from Git using `.gitignore`.
+View the JSON report:
+
+```bash
+cat reports/ec2_audit_report.json
+```
+
+The generated CSV and JSON reports are excluded from Git using `.gitignore`.
 
 ## 10. Security Considerations
 
@@ -302,6 +357,9 @@ The generated reports are excluded from Git using `.gitignore`.
 
 ```text
 lab-04-aws-auditor/
+│
+├── architecture/
+│   └── README.md
 │
 ├── bootstrap/
 │   ├── main.tf
@@ -322,9 +380,14 @@ lab-04-aws-auditor/
 │   ├── aws_audit.py
 │   └── deploy_website.sh
 │
+├── reports/
+│   └── README.md
+│
 ├── .gitignore
 └── README.md
 ```
+
+Generated report files are created inside `reports/` when the auditor runs. They are intentionally excluded from Git.
 
 ## 12. Project Status
 
@@ -338,6 +401,7 @@ The following milestones have been completed and verified:
 - Monthly EC2 compute cost estimation.
 - CSV audit report generation.
 - JSON audit report generation.
+- Live AWS audit execution.
 - Independent Git repository creation.
 - Initial Git commit.
 - Public GitHub repository publication.
@@ -356,7 +420,7 @@ The following main Terraform-managed resources have been destroyed:
 
 The following backend resources are intentionally retained:
 
-| Resource | Name | Current Status |
+| Resource | Name | Verified Status |
 |---|---|---|
 | S3 bucket | `lab-04-aws-auditor-tfstate-476c87e6` | Exists |
 | DynamoDB table | `lab-04-aws-auditor-state-lock` | ACTIVE |
@@ -364,6 +428,8 @@ The following backend resources are intentionally retained:
 The main website is no longer running because its EC2 instance has been destroyed.
 
 The remote Terraform backend remains available for future infrastructure deployments.
+
+The separate EC2 instance discovered by the latest audit was not created by the main Terraform configuration. The auditor only inspected it; it was not modified.
 
 ## 13. Conclusion
 

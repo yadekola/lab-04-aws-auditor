@@ -1,6 +1,7 @@
 import boto3
 import csv
 import json
+import os
 from datetime import datetime
 
 audit_records = []
@@ -132,8 +133,11 @@ if audit_records:
     print("Stopped Instances:", stopped_instances)
     print("Total Estimated Monthly Cost: $", round(total_monthly_cost, 2))
 
+    # Create reports directory if it does not exist
+    os.makedirs("reports", exist_ok=True)
+
     # Export CSV
-    with open("ec2_audit_report.csv", "w", newline="", encoding="utf-8") as file:
+    with open("reports/ec2_audit_report.csv", "w", newline="", encoding="utf-8") as file:
 
         writer = csv.DictWriter(
             file,
@@ -143,10 +147,10 @@ if audit_records:
         writer.writeheader()
         writer.writerows(audit_records)
 
-    print("Audit report saved successfully!")
+    print("CSV audit report saved successfully!")
 
     # Export JSON
-    with open("ec2_audit_report.json", "w", encoding="utf-8") as file:
+    with open("reports/ec2_audit_report.json", "w", encoding="utf-8") as file:
 
         json.dump(audit_records, file, indent=4)
 

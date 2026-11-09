@@ -18,6 +18,8 @@ crash.log
 # Generated reports
 ec2_audit_report.csv
 ec2_audit_report.json
+reports/ec2_audit_report.csv
+reports/ec2_audit_report.json
 
 # Editor files
 .vscode/
